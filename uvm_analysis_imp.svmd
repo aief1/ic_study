@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "cells": [
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "# uvm_analysis_imp 详解\n\n## 一句话总结\n\n> **`uvm_analysis_imp` 是 analysis 通信的“最终接收口”，真正实现 write() 函数来处理广播来的 transaction。**\n\n---\n\n## 1. analysis_port / export / imp 的关系\n\n```text\nanalysis_port -> analysis_export -> analysis_imp\n```\n\n- `analysis_port`：发送方\n- `analysis_export`：中间转发口\n- `analysis_imp`：真正实现接收逻辑的端口\n\n## 2. 为什么需要 imp\n\n因为最终总得有个地方真正实现：\n\n```systemverilog\nfunction void write(my_item t);\n```\n\n这个“真正实现”就落在 imp 上。\n\n## 3. 基本写法\n\n```systemverilog\nclass my_scoreboard extends uvm_scoreboard;\n  uvm_analysis_imp #(my_item, my_scoreboard) analysis_export;\n\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n    analysis_export = new(\"analysis_export\", this);\n  endfunction\n\n  function void write(my_item t);\n    `uvm_info(\"SCB\", \"received item\", UVM_LOW)\n  endfunction\nendclass\n```\n\n## 4. 一个组件多个 imp\n\n当一个组件要同时接收两种不同来源的数据时，可以用多个 imp：\n\n```systemverilog\nuvm_analysis_imp_exp #(my_item, my_scoreboard) exp_export;\nuvm_analysis_imp_act #(my_item, my_scoreboard) act_export;\n```\n\n然后分别实现：\n\n```systemverilog\nfunction void write_exp(my_item t);\nfunction void write_act(my_item t);\n```\n\n## 5. 常见场景\n\n- scoreboard 接收 expected/actual\n- subscriber 接收 monitor 数据\n- logger 接收 transaction 做打印\n\n## 6. 一句话总结\n\n`uvm_analysis_imp` 是 analysis 广播的“终点站”，真正实现接收和处理逻辑。"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "class my_scb extends uvm_scoreboard;\n  uvm_analysis_imp #(my_item, my_scb) analysis_export;\n\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n    analysis_export = new(\"analysis_export\", this);\n  endfunction\n\n  function void write(my_item t);\n    `uvm_info(\"SCB\", $sformatf(\"addr=%h\", t.addr), UVM_LOW)\n  endfunction\nendclass"
+    }
+  ]
+}

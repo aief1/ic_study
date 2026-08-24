@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "cells": [
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "# uvm_object 详解\n\n## 一句话总结\n\n> **`uvm_object` 是 UVM 所有类的根，任何想被 factory 创建、能被 copy/compare/print 的数据类，最终都继承自它。**\n\n---\n\n## 1. 为什么要有 uvm_object\n\nSystemVerilog 的 class 本身已经提供了 new() 和基本继承，为什么还要 uvm_object？\n\n因为验证环境需要比“普通对象”更多的能力：\n\n- 需要知道对象的名字和类型\n- 需要能在运行时打印、复制、比较、打包对象\n- 需要让 factory 根据类型名统一创建对象\n- 需要支持 override 机制\n\n`uvm_object` 就是在 SV class 之上，加了这一整套“验证专用”的基础能力。\n\n## 2. 继承体系\n\n```text\nuvm_object\n  ├── uvm_transaction\n  │     └── uvm_sequence_item\n  ├── uvm_component\n  │     ├── uvm_env\n  │     ├── uvm_agent\n  │     ├── uvm_driver\n  │     ├── uvm_monitor\n  │     ├── uvm_scoreboard\n  │     └── uvm_sequencer\n  └── uvm_sequence\n```\n\n- `uvm_object`：根类，提供名字、创建、复制、比较、打印、打包等通用能力\n- `uvm_transaction`：加了时间戳和事务记录\n- `uvm_sequence_item`：再加 sequence 接口\n- `uvm_component`：加了层次结构、phase、parent/child\n\n## 3. uvm_object 提供了什么\n\n### 3.1 名字管理\n\n每个 uvm_object 都有一个字符串名字：\n\n```systemverilog\nfunction string get_name();\nfunction void set_name(string name);\n```\n\n这个名字在打印、调试、report 里非常重要。\n\n### 3.2 类型创建接口\n\n配合宏注册后，可以通过 factory 统一创建：\n\n```systemverilog\nmy_obj = my_class::type_id::create(\"my_obj\");\n```\n\n这个能力是后面 override、config_db、phase 的基础。\n\n### 3.3 数据处理能力\n\n`uvm_object` 提供了常用 hook 和对外接口：\n\n- `copy()` / `do_copy()`\n- `compare()` / `do_compare()`\n- `print()` / `do_print()`\n- `pack()` / `do_pack()`\n- `unpack()` / `do_unpack()`\n- `record()` / `do_record()`\n\n你既可以直接用宏自动生成，也可以自己重写 do_* 函数。\n\n## 4. 最小例子\n\n```systemverilog\nclass my_obj extends uvm_object;\n    rand bit [31:0] data;\n\n    `uvm_object_utils_begin(my_obj)\n        `uvm_field_int(data, UVM_ALL_ON)\n    `uvm_object_utils_end\n\n    function new(string name = \"my_obj\");\n        super.new(name);\n    endfunction\nendclass\n```\n\n这个对象已经具备：\n\n- 被 factory 创建\n- 自动 copy/compare/print/pack\n- 有名字\n\n## 5. uvm_object 和 uvm_component 的区别\n\n| 对比项 | uvm_object | uvm_component |\n|--------|------------|---------------|\n| 是否参与层次树 | 否 | 是 |\n| 是否有 phase | 否 | 是 |\n| 是否有 parent | 否 | 是 |\n| 常见用途 | transaction、配置对象、sequence item | env、agent、driver、monitor、scoreboard |\n| 创建方式 | `type_id::create()` | `type_id::create(name, parent)` |\n\n## 6. 什么时候继承 uvm_object\n\n当你的类满足这些条件之一：\n\n- 需要被 factory 创建\n- 需要 copy / compare / print / pack\n- 需要在 sequence、test、env 之间传递\n- 需要 override\n\n就优先考虑继承 `uvm_object` 或其子类。\n\n## 7. 一句话总结\n\n`uvm_object` 是 UVM 的“对象基础设施”，它把普通 class 升级成了支持工厂、自动化数据处理和统一命名管理的验证对象。"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "class cfg_obj extends uvm_object;\n  rand bit [31:0] base_addr;\n  rand bit [31:0] addr_mask;\n\n  `uvm_object_utils_begin(cfg_obj)\n    `uvm_field_int(base_addr, UVM_ALL_ON)\n    `uvm_field_int(addr_mask, UVM_ALL_ON)\n  `uvm_object_utils_end\n\n  function new(string name = \"cfg_obj\");\n    super.new(name);\n  endfunction\nendclass\n\ncfg_obj cfg;\ncfg = cfg_obj::type_id::create(\"cfg\");\ncfg.base_addr = 32'h0000_0000;\ncfg.print();"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "signal": [
+    { "name": "HCLK",         "wave": "p......" },
+    {},
+    { "name": "HADDR",        "wave": "x.=x...", "data": ["0x1000"] },
+    { "name": "HWRITE",       "wave": "0.0...." },
+    { "name": "HTRANS",       "wave": "0.2.0..", "data": ["NONSEQ"] },
+    { "name": "HBURST",       "wave": "0.2.0..", "data": ["SINGLE"] },
+    { "name": "HSIZE",        "wave": "0.2.0..", "data": ["WORD"] },
+    {},
+    { "name": "HREADY_OUT",   "wave": "0.1...." },
+    { "name": "HRESP",        "wave": "0.2.0..", "data": ["OKAY"] },
+    { "name": "HRDATA",       "wave": "x.=x...", "data": ["0xAABBCCDD"] },
+    {},
+    { "name": "SRAM_ADDR",    "wave": "x.=x...", "data": ["0x400"] },
+    { "name": "SRAM_RDATA",   "wave": "x.=x...", "data": ["0xAABBCCDD"] },
+    { "name": "SRAM_WEN",     "wave": "0.0...." }
+  ],
+  "head": { "text": "CBB_AHB_SRAMC - Single Read (0 wait states)", "tick": 0 },
+  "foot": { "text": "T0: address phase (HADDR valid) -> T1: data phase (HRDATA valid, HREADY=1)", "tock": 0 },
+  "config": { "hscale": 2 }
+}

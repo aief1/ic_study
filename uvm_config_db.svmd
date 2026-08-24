@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "cells": [
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "# uvm_config_db 详解\n\n## 一句话总结\n\n> **`uvm_config_db` 是 UVM 的“全局参数快递站”，用键值方式在 test/env/agent/driver 之间传递配置。**\n\n---\n\n## 1. 为什么需要 config_db\n\n如果靠逐级 new 传参，层次一深就会非常麻烦：\n\n- test -> env -> agent -> driver\n- 每层都要重复写构造函数参数\n- 结构一改变，所有中间层都要改\n\nconfig_db 解决的是：\n\n- 参数集中设置\n- 按需获取\n- 不破坏组件层次\n\n## 2. 基本用法\n\n### 2.1 set\n\n```systemverilog\nuvm_config_db#(int)::set(this, \"env.agent.drv\", \"max_txn\", 100);\n```\n\n### 2.2 get\n\n```systemverilog\nint max_txn;\nif (!uvm_config_db#(int)::get(this, \"\", \"max_txn\", max_txn))\n  `uvm_fatal(\"CFG\", \"max_txn not found\")\n```\n\n## 3. 参数含义\n\n```systemverilog\nuvm_config_db#(T)::set(cntxt, inst_name, field_name, value);\nuvm_config_db#(T)::get(cntxt, inst_name, field_name, value);\n```\n\n- `T`：传递的数据类型\n- `cntxt`：路径上下文\n- `inst_name`：实例路径\n- `field_name`：字段名\n- `value`：值\n\n## 4. 典型场景\n\n### 4.1 传 virtual interface\n\n```systemverilog\nuvm_config_db#(virtual my_if)::set(null, \"uvm_test_top.env.agent.drv\", \"vif\", tb_if);\n```\n\ndriver 中：\n\n```systemverilog\nvirtual my_if vif;\nif (!uvm_config_db#(virtual my_if)::get(this, \"\", \"vif\", vif))\n  `uvm_fatal(\"VIF\", \"vif not set\")\n```\n\n### 4.2 传配置对象\n\n```systemverilog\nmy_cfg cfg;\ncfg = my_cfg::type_id::create(\"cfg\");\ncfg.max_len = 16;\nuvm_config_db#(my_cfg)::set(this, \"env\", \"cfg\", cfg);\n```\n\n### 4.3 传开关参数\n\n```systemverilog\nuvm_config_db#(bit)::set(this, \"env.scb\", \"enable_check\", 1);\n```\n\n## 5. 常见坑\n\n- 类型不匹配：set 用 int，get 用 bit\n- 路径写错，导致 get 不到\n- 在错误 phase 里 get，组件还没创建\n- 用 config_db 传太多本该显式连接的数据，导致结构不清晰\n\n## 6. config_db 和资源数据库的关系\n\n可以把 config_db 看作：\n\n- 全局可查找的配置仓库\n- 但需要自己保证类型、路径、字段名一致\n\n## 7. 一句话总结\n\n`uvm_config_db` 就是 UVM 的“参数快递系统”，把 test 里的配置精准送到任何需要的组件。"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "class my_cfg extends uvm_object;\n  rand bit [31:0] base_addr;\n  `uvm_object_utils(my_cfg)\n  function new(string name=\"my_cfg\"); super.new(name); endfunction\nendclass\n\nclass my_test extends uvm_test;\n  function void build_phase(uvm_phase phase);\n    super.build_phase(phase);\n    my_cfg cfg = my_cfg::type_id::create(\"cfg\");\n    cfg.base_addr = 32'h1000_0000;\n    uvm_config_db#(my_cfg)::set(this, \"env\", \"cfg\", cfg);\n  endfunction\nendclass\n\nclass my_env extends uvm_env;\n  my_cfg cfg;\n  function void build_phase(uvm_phase phase);\n    super.build_phase(phase);\n    if (!uvm_config_db#(my_cfg)::get(this, \"\", \"cfg\", cfg))\n      `uvm_fatal(\"CFG\", \"cfg not found\")\n  endfunction\nendclass"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "cells": [
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "# uvm_agent 详解\n\n## 一句话总结\n\n> **`uvm_agent` 是把 driver、monitor、sequencer 打包在一起的“协议小组”。**\n\n---\n\n## 1. agent 的作用\n\n一个完整接口通常需要：\n\n- sequencer：产生/转发激励\n- driver：驱动 DUT\n- monitor：观察 DUT\n\nagent 就是把这三者装在一起，对外统一暴露。\n\n## 2. 为什么需要 agent\n\n如果没有 agent，env 里会直接堆很多零散组件：\n\n- driver 一个\n- monitor 一个\n- sequencer 一个\n- 端口连接也散在各处\n\nagent 的意义是：\n\n- 复用一个接口协议\n- 统一创建和连接\n- 对外只暴露一个整体\n\n## 3. 典型结构\n\n```systemverilog\nclass my_agent extends uvm_agent;\n  `uvm_component_utils(my_agent)\n\n  my_sequencer sqr;\n  my_driver    drv;\n  my_monitor   mon;\n\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n  endfunction\n\n  function void build_phase(uvm_phase phase);\n    super.build_phase(phase);\n    sqr = my_sequencer::type_id::create(\"sqr\", this);\n    drv = my_driver   ::type_id::create(\"drv\", this);\n    mon = my_monitor  ::type_id::create(\"mon\", this);\n  endfunction\n\n  function void connect_phase(uvm_phase phase);\n    super.connect_phase(phase);\n    drv.seq_item_port.connect(sqr.seq_item_export);\n  endfunction\nendclass\n```\n\n## 4. agent 的 active / passive\n\n### 4.1 active agent\n\n- 有 driver + sequencer + monitor\n- 既能驱动 DUT，也能观察 DUT\n\n### 4.2 passive agent\n\n- 只有 monitor\n- 只观察，不驱动\n\n通常会通过配置参数决定：\n\n```systemverilog\nif (is_active == UVM_ACTIVE) begin\n  sqr = ...;\n  drv = ...;\nend\nmon = ...;\n```\n\n## 5. agent 和 env 的关系\n\n- env 是“更大的容器”\n- agent 是 env 里的“接口小组”\n\n一个 env 可以包含多个 agent：\n\n- AHB agent\n- APB agent\n- UART agent\n\n## 6. 一句话总结\n\n`uvm_agent` 是“协议套件”，把一个接口相关的发送、驱动、监控打包成一个可复用模块。"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "class my_agent extends uvm_agent;\n  `uvm_component_utils(my_agent)\n\n  my_sequencer sqr;\n  my_driver    drv;\n  my_monitor   mon;\n\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n  endfunction\n\n  function void build_phase(uvm_phase phase);\n    super.build_phase(phase);\n    sqr = my_sequencer::type_id::create(\"sqr\", this);\n    drv = my_driver   ::type_id::create(\"drv\", this);\n    mon = my_monitor  ::type_id::create(\"mon\", this);\n  endfunction\nendclass"
+    }
+  ]
+}

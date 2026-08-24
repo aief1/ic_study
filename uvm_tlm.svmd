@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "cells": [
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "# UVM TLM 端口详解\n\n## 一句话总结\n\n> **TLM 是 UVM 组件之间传 transaction 的“标准插座”，让组件不靠直接调函数也能通信。**\n\n---\n\n## 1. 为什么需要 TLM\n\n如果组件之间直接互相调用函数，会有几个问题：\n\n- 组件耦合太紧\n- 层次一深就很难维护\n- 替换一个组件会牵连很多代码\n\nTLM 的思想是：\n\n- 组件只暴露端口\n- 连接关系由上层决定\n- 数据怎么流动和组件内部实现解耦\n\n## 2. 常见端口类型\n\n### 2.1 analysis_port\n\n一对多广播，常见于 monitor：\n\n```systemverilog\nuvm_analysis_port #(my_item) ap;\n```\n\n### 2.2 analysis_export / analysis_imp\n\n接收 analysis_port 的数据：\n\n```systemverilog\nuvm_analysis_imp #(my_item, my_scoreboard) analysis_export;\n```\n\n### 2.3 seq_item_port / seq_item_export\n\nsequencer 和 driver 之间传递 item：\n\n```systemverilog\ndrv.seq_item_port.connect(sqr.seq_item_export);\n```\n\n## 3. connect 方向\n\n```systemverilog\nmon.ap.connect(scb.analysis_export);\ndrv.seq_item_port.connect(sqr.seq_item_export);\n```\n\n原则：\n\n- port 连 export\n- export 连 imp\n- 最终在 imp 端实现 write()/get()/put() 等方法\n\n## 4. analysis 通信的特点\n\n- 单向广播\n- 一对多\n- 接收方不阻塞发送方\n- 常用于 monitor -> scoreboard / coverage / subscriber\n\n## 5. 常见组合\n\n### 5.1 monitor -> scoreboard\n\n```systemverilog\nmon.ap.connect(scb.analysis_export);\n```\n\n### 5.2 monitor -> coverage\n\n```systemverilog\nmon.ap.connect(cov.analysis_export);\n```\n\n### 5.3 sequencer -> driver\n\n```systemverilog\ndrv.seq_item_port.connect(sqr.seq_item_export);\n```\n\n## 6. 一句话总结\n\nTLM 就是 UVM 组件之间的“标准化数据接口”，让组件像积木一样插接。"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "class my_monitor extends uvm_monitor;\n  uvm_analysis_port #(my_item) ap;\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n    ap = new(\"ap\", this);\n  endfunction\nendclass\n\nclass my_scoreboard extends uvm_scoreboard;\n  uvm_analysis_imp #(my_item, my_scoreboard) analysis_export;\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n    analysis_export = new(\"analysis_export\", this);\n  endfunction\n  function void write(my_item t);\n    `uvm_info(\"SCB\", \"got item\", UVM_LOW)\n  endfunction\nendclass"
+    }
+  ]
+}

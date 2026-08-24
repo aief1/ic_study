@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "cells": [
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "# uvm_scoreboard 详解\n\n## 一句话总结\n\n> **`uvm_scoreboard` 是“裁判”，负责比较期望值和实际值，判断 DUT 是否正确。**\n\n---\n\n## 1. scoreboard 的作用\n\n验证平台的核心问题是：\n\n- DUT 输出对不对？\n- 数据有没有丢？\n- 顺序对不对？\n- 响应对不对？\n\nscoreboard 就是专门回答这些问题的组件。\n\n## 2. 数据来源\n\nscoreboard 通常接收两类数据：\n\n- expected transaction（来自 reference model / predictor）\n- actual transaction（来自 monitor）\n\n## 3. 基本结构\n\n```systemverilog\nclass my_scoreboard extends uvm_scoreboard;\n  `uvm_component_utils(my_scoreboard)\n\n  uvm_analysis_imp_exp #(my_item, my_scoreboard) exp_export;\n  uvm_analysis_imp_act #(my_item, my_scoreboard) act_export;\n\n  my_item exp_q[$];\n  my_item act_q[$];\n\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n    exp_export = new(\"exp_export\", this);\n    act_export = new(\"act_export\", this);\n  endfunction\n\n  function void write_exp(my_item item);\n    exp_q.push_back(item);\n    compare();\n  endfunction\n\n  function void write_act(my_item item);\n    act_q.push_back(item);\n    compare();\n  endfunction\n\n  function void compare();\n    if (exp_q.size() > 0 && act_q.size() > 0) begin\n      my_item e = exp_q.pop_front();\n      my_item a = act_q.pop_front();\n      if (a.data !== e.data)\n        `uvm_error(\"SCB\", $sformatf(\"data mismatch exp=%h act=%h\", e.data, a.data))\n    end\n  endfunction\nendclass\n```\n\n## 4. scoreboard 常见比较方式\n\n### 4.1 顺序比较\n\n- 队列一一对应\n- 最常见\n\n### 4.2 无序比较\n\n- 适合乱序完成的事务\n- 需要 transaction id 匹配\n\n### 4.3 窗口比较\n\n- 允许一定时间窗口内匹配\n\n## 5. scoreboard 的职责边界\n\nscoreboard 不应该：\n\n- 驱动 DUT\n- 修改 transaction\n- 承担 reference model 的全部职责\n\n它应该专注：\n\n- 接收 expected/actual\n- 比较\n- 报错和统计\n\n## 6. 一句话总结\n\n`uvm_scoreboard` 就是“比对器”，把期望结果和真实结果放在一起对答案。"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "class my_scoreboard extends uvm_scoreboard;\n  `uvm_component_utils(my_scoreboard)\n\n  uvm_analysis_imp_exp #(my_item, my_scoreboard) exp_export;\n  uvm_analysis_imp_act #(my_item, my_scoreboard) act_export;\n\n  my_item exp_q[$];\n  my_item act_q[$];\n\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n    exp_export = new(\"exp_export\", this);\n    act_export = new(\"act_export\", this);\n  endfunction\n\n  function void write_exp(my_item item);\n    exp_q.push_back(item);\n  endfunction\n\n  function void write_act(my_item item);\n    act_q.push_back(item);\n  endfunction\nendclass"
+    }
+  ]
+}

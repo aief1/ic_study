@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "cells": [
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "## 动态数组"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "module top();\nreg [7:0] max [];\nmax = new(6);\n    \nendmodule / top"
+    },
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "## 队列\n队列有排序 搜索的功能\n支持push和pop\n支持add与remove\n"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "int J = 1\nb[$] = {3,4},\nb.insert(1,J);//插入到1位\nq.delete(1);\n\nq.push_front(6)//队首插入\nq.pop_back;//队尾删除\n\n"
+    },
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "## 联合数组\n用foreach初始化\n分配的不是连续的地址单元\n"
+    },
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "## 数组方法\n翻转 reverse\n乱序 shuffle\n升序排列 sort\n降序排列 rsort"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "let arr = [3, 1, 4, 1, 5, 9, 2, 6];\narr.reverse()          // 翻转\narr.sort(() => Math.random() - 0.5)  // 乱序\narr.sort((a, b) => a - b)  // 升序\narr.sort((a, b) => b - a)  // 降序"
+    }
+  ]
+}

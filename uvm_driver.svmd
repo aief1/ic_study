@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "cells": [
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "# uvm_driver 详解\n\n## 一句话总结\n\n> **`uvm_driver` 是把 sequence_item 翻译成 DUT 引脚动作的“执行者”。**\n\n---\n\n## 1. driver 的位置\n\n```text\nsequence -> sequencer -> driver -> DUT\n```\n\ndriver 是最后一个“软件侧”组件，再往下就是 DUT 信号。\n\n## 2. driver 的职责\n\n- 从 sequencer 获取 item\n- 按协议把 item 转换成接口信号\n- 控制时序\n- 返回 item_done()\n\n## 3. 基本结构\n\n```systemverilog\nclass my_driver extends uvm_driver #(my_item);\n  `uvm_component_utils(my_driver)\n\n  virtual my_if vif;\n\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n  endfunction\n\n  function void build_phase(uvm_phase phase);\n    super.build_phase(phase);\n    if (!uvm_config_db#(virtual my_if)::get(this, \"\", \"vif\", vif))\n      `uvm_fatal(\"DRV\", \"vif not found\")\n  endfunction\n\n  task run_phase(uvm_phase phase);\n    my_item item;\n    forever begin\n      seq_item_port.get_next_item(item);\n      drive_item(item);\n      seq_item_port.item_done();\n    end\n  endtask\n\n  task drive_item(my_item item);\n    @(posedge vif.clk);\n    vif.addr <= item.addr;\n    vif.data <= item.data;\n  endtask\nendclass\n```\n\n## 4. driver 和 interface 的关系\n\ndriver 一般不直接操作 module，而是通过 virtual interface 操作接口信号。\n\n好处：\n\n- testbench 和 DUT 解耦\n- 代码更容易复用\n- 时序更清晰\n\n## 5. get_next_item 和 item_done\n\n### 5.1 get_next_item\n\n- 从 sequencer 取下一个 item\n- 会阻塞等待\n\n### 5.2 item_done\n\n- 告诉 sequencer 当前 item 已经处理完\n- sequencer 才能继续发下一个\n\n## 6. driver 中常见写法\n\n### 6.1 复位处理\n\n```systemverilog\ntask run_phase(uvm_phase phase);\n  wait (vif.rst_n === 1'b1);\n  forever begin\n    seq_item_port.get_next_item(item);\n    drive_item(item);\n    seq_item_port.item_done();\n  end\nendtask\n```\n\n### 6.2 分时操作\n\n```systemverilog\ntask drive_item(my_item item);\n  @(posedge vif.clk);\n  vif.req <= 1'b1;\n  vif.addr <= item.addr;\n  @(posedge vif.clk);\n  vif.req <= 1'b0;\nendtask\n```\n\n## 7. 常见坑\n\n- 忘拿 virtual interface\n- 在 function phase 里写时序逻辑\n- 忘记 item_done()\n- 驱动和采样同一拍，导致竞争\n\n## 8. 一句话总结\n\n`uvm_driver` 就是“翻译官”，把抽象的 transaction 翻译成 DUT 真正能看到的引脚行为。"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "class my_driver extends uvm_driver #(my_item);\n  `uvm_component_utils(my_driver)\n\n  virtual my_if vif;\n\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n  endfunction\n\n  task run_phase(uvm_phase phase);\n    my_item item;\n    forever begin\n      seq_item_port.get_next_item(item);\n      drive(item);\n      seq_item_port.item_done();\n    end\n  endtask\n\n  task drive(my_item item);\n    @(posedge vif.clk);\n    vif.start <= 1'b1;\n    vif.addr  <= item.addr;\n    @(posedge vif.clk);\n    vif.start <= 1'b0;\n  endtask\nendclass"
+    }
+  ]
+}

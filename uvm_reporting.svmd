@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "cells": [
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "# UVM Report / Message 机制详解\n\n## 一句话总结\n\n> **UVM 消息机制就是“统一打印系统”，用 info/warning/error/fatal 分级输出调试和检查结果。**\n\n---\n\n## 1. 为什么不用 $display\n\n`$display` 当然能用，但问题是：\n\n- 没有统一级别\n- 不能方便过滤\n- 不利于大规模平台调试\n\nUVM 消息机制提供了：\n\n- 消息级别\n- 消息 ID\n- verbosity 控制\n- report catcher / handler\n\n## 2. 常用宏\n\n### 2.1 info\n\n```systemverilog\n`uvm_info(\"ID\", \"message\", UVM_LOW)\n```\n\n### 2.2 warning\n\n```systemverilog\n`uvm_warning(\"ID\", \"message\")\n```\n\n### 2.3 error\n\n```systemverilog\n`uvm_error(\"ID\", \"message\")\n```\n\n### 2.4 fatal\n\n```systemverilog\n`uvm_fatal(\"ID\", \"message\")\n```\n\n## 3. verbosity\n\n常见级别：\n\n- `UVM_NONE`\n- `UVM_LOW`\n- `UVM_MEDIUM`\n- `UVM_HIGH`\n- `UVM_FULL`\n- `UVM_DEBUG`\n\nverbosity 越高，打印越详细。\n\n## 4. 消息 ID 的作用\n\nID 用来分类消息，比如：\n\n- \"DRV\"\n- \"MON\"\n- \"SCB\"\n- \"CFG\"\n- \"TEST\"\n\n好处：\n\n- 方便过滤\n- 方便定位问题来源\n\n## 5. report 和 phase 的配合\n\n- run_phase：打印关键进度\n- check_phase：输出 error / fatal\n- report_phase：汇总 pass/fail 统计\n\n## 6. 常见建议\n\n- 关键流程用 UVM_LOW\n- 调试细节用 UVM_HIGH / UVM_DEBUG\n- 真正错误用 `uvm_error`，不要只 `$display`\n- 致命配置缺失用 `uvm_fatal`\n\n## 7. 一句话总结\n\nUVM report 机制就是“分级、可过滤、可统一管理的打印系统”，比裸 `$display` 更适合大型验证平台。"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "class my_driver extends uvm_driver #(my_item);\n  `uvm_component_utils(my_driver)\n\n  task run_phase(uvm_phase phase);\n    `uvm_info(\"DRV\", \"driver started\", UVM_LOW)\n    `uvm_warning(\"DRV\", \"this is a warning example\")\n    `uvm_error(\"DRV\", \"this is an error example\")\n  endtask\nendclass"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "signal": [
+    { "name": "HCLK",         "wave": "p..........." },
+    {},
+    { "name": "HADDR",        "wave": "x.=x.=x.=x.", "data": ["0x1000", "0x1004", "0x1008", "0x1000"] },
+    { "name": "HWRITE",       "wave": "0.0........." },
+    { "name": "HTRANS",       "wave": "0.2.2.2.2..", "data": ["NONSEQ", "SEQ", "SEQ", "SEQ"] },
+    { "name": "HBURST",       "wave": "0.2.0.......", "data": ["WRAP4"] },
+    { "name": "HSIZE",        "wave": "0.2.0.......", "data": ["WORD"] },
+    {},
+    { "name": "HREADY_OUT",   "wave": "0.1.1.1.1.." },
+    { "name": "HRESP",        "wave": "0.2.2.2.2..", "data": ["OKAY", "OKAY", "OKAY", "OKAY"] },
+    { "name": "HRDATA",       "wave": "x.=x.=x.=x.", "data": ["D0", "D1", "D2", "D3"] },
+    {},
+    { "name": "SRAM_ADDR",    "wave": "x.=x.=x.=x.", "data": ["0x400", "0x401", "0x402", "0x400"] },
+    { "name": "SRAM_WEN",     "wave": "0.0........." }
+  ],
+  "head": { "text": "CBB_AHB_SRAMC - WRAP4 Read Burst (16-byte boundary)", "tick": 0 },
+  "foot": { "text": "Word addresses: 0x400, 0x401, 0x402, 0x400 (HADDR[3:2] wraps). 4-beat burst, 0 wait states.", "tock": 0 },
+  "config": { "hscale": 2 }
+}

@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "cells": [
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "tsn12ffcll**spsram**\t单口 SRAM\ntsn12ffcll**dpsram**\t双口 SRAM\ntsn12ffcll**1prf**\t单口寄存器堆\ntsn12ffcll**2prf**\t双口寄存器堆\ntsn12ffcll**rom**\tROM"
+    },
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "### 步骤\n#### 第一步 启动license\n"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "bash /home/test/.codex/skills/mc2-dc-synthesis-flow/scripts/start_mc2_license.sh\ncd /home/test/work/MC2/202607\n./lmstat -c 27077@ICEDA -a //验证是否成功"
+    },
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "#### 第二步 理解config.txt （规格文档）\ncat /home/test/work/.tmp_mc2/mctest/config.txt\n这个文件的意思是：\n64 = 字数（NWORD=64）\n4 = 位宽（NBIT=4）\nm4 = 列复用比（NMUX=4）\n列复用比（m值）通常取 4/8/16，值越大面积越小但速度慢。"
+    },
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "#### 第三步 设置环境变量\nsource /home/test/work/MC2/tsmc12.bash\n\nMC_HOME指向目标库的 compiler/ 目录"
+    },
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "#### 第四步 运行.pl脚本生成memory\n"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "# 创建一个新工作目录\nmkdir -p ~/my_mc_test\ncd ~/my_mc_test\n\n# 把 config.txt 改成你想要的规格\necho \"128x8m4\" > config.txt\n\n# 复制 .pl 和 .mco 文件\ncp /home/test/work/MC/tsn12ffclldpsram_20131200_130c/compiler/* .\nchmod +x *.pl\n\n# 运行 .pl 脚本（它会读 config.txt，生成 .cfg，然后调 mc2-eu）\n./tsn12ffclldpsram_130c.pl"
+    },
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "#### 第五步 查看生成的产物\n"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "# 查看生成的目录（名字基于 config.txt 的规格）\nls -la tsdn12ffcllulvta128x8m4wbsho_130c/\n\n# 各个子目录\nls tsdn12ffcllulvta128x8m4wbsho_130c/VERILOG/   # Verilog 仿真模型\nls tsdn12ffcllulvta128x8m4wbsho_130c/NLDM/       # 时序库 .lib\nls tsdn12ffcllulvta128x8m4wbsho_130c/LEF/        # 物理 LEF\nls tsdn12ffcllulvta128x8m4wbsho_130c/GDSII/      # 版图 GDSII\nls tsdn12ffcllulvta128x8m4wbsho_130c/SPICE/      # SPICE 网表\nls tsdn12ffcllulvta128x8m4wbsho_130c/DATASHEET/  # 数据手册"
+    },
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "#### 第六步 查看生成的verilog模型"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "# 看看生成的 SRAM 长什么样\nhead -100 tsdn12ffcllulvta128x8m4wbsho_130c/VERILOG/*.v"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "cells": [
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "# uvm_sequencer 详解\n\n## 一句话总结\n\n> **`uvm_sequencer` 是 sequence 和 driver 之间的“中转站”，负责把 sequence_item 从 sequence 送到 driver。**\n\n---\n\n## 1. sequencer 的位置\n\n```text\nsequence -> sequencer -> driver -> DUT\n```\n\n它不直接产生激励，也不直接驱动信号，它只做调度和传递。\n\n## 2. 为什么需要 sequencer\n\n如果没有 sequencer，sequence 和 driver 会强耦合：\n\n- sequence 直接依赖 driver 实现\n- 多 sequence 同时运行时不好管理\n- driver 获取 item 的方式不统一\n\nsequencer 把两者解耦。\n\n## 3. sequencer 的职责\n\n1. 接收 sequence 的 item 请求  \n2. 仲裁多个 sequence 的发送顺序  \n3. 把 item 交给 driver  \n4. 管理 item_done/get_next_item 等握手\n\n## 4. 最小例子\n\n```systemverilog\nclass my_sequencer extends uvm_sequencer #(my_item);\n  `uvm_component_utils(my_sequencer)\n\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n  endfunction\nendclass\n```\n\n一般情况下，sequencer 不需要写太多自定义逻辑，UVM 已经实现了大部分功能。\n\n## 5. driver 和 sequencer 的连接\n\n```systemverilog\nfunction void connect_phase(uvm_phase phase);\n  super.connect_phase(phase);\n  drv.seq_item_port.connect(sqr.seq_item_export);\nendfunction\n```\n\n## 6. sequence 如何在 sequencer 上运行\n\n```systemverilog\nseq.start(sqr);\n```\n\n这表示：\n\n- sequence 通过这个 sequencer 发送 item\n- sequencer 再把 item 交给连接的 driver\n\n## 7. sequencer 和 sequence 的区别\n\n| 对比项 | sequence | sequencer |\n|--------|----------|-----------|\n| 作用 | 产生激励 | 调度并转发激励 |\n| 是否是 component | 否 | 是 |\n| 是否有 phase | 否 | 是 |\n| 是否直接驱动 DUT | 否 | 否 |\n\n## 8. 一句话总结\n\n`uvm_sequencer` 就是“激励快递员”，把 sequence 产生的 item 有序地送到 driver 手里。"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "class my_sequencer extends uvm_sequencer #(my_item);\n  `uvm_component_utils(my_sequencer)\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n  endfunction\nendclass\n\nclass my_agent extends uvm_agent;\n  my_sequencer sqr;\n  my_driver    drv;\n\n  function void build_phase(uvm_phase phase);\n    super.build_phase(phase);\n    sqr = my_sequencer::type_id::create(\"sqr\", this);\n    drv = my_driver   ::type_id::create(\"drv\", this);\n  endfunction\n\n  function void connect_phase(uvm_phase phase);\n    super.connect_phase(phase);\n    drv.seq_item_port.connect(sqr.seq_item_export);\n  endfunction\nendclass"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "cells": [
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "# uvm_component 详解\n\n## 一句话总结\n\n> **`uvm_component` 是 UVM 组件树的节点基类，负责层次结构、phase 调度和组件间连接。**\n\n---\n\n## 1. 为什么需要 uvm_component\n\n验证平台不是单个对象，而是一棵组件树：\n\n```text\nuvm_test_top\n└── env\n    ├── agent\n    │   ├── sequencer\n    │   ├── driver\n    │   └── monitor\n    ├── ref_model\n    └── scoreboard\n```\n\n这些组件需要：\n\n- 有父子层次关系\n- 按 phase 顺序执行\n- 能互相连接端口\n- 能被统一打印拓扑\n\n这就是 `uvm_component` 的职责。\n\n## 2. uvm_component 提供的能力\n\n### 2.1 层次结构\n\n每个 component 创建时都要指定 parent：\n\n```systemverilog\nmy_driver drv;\ndrv = my_driver::type_id::create(\"drv\", this);\n```\n\n其中 `this` 就是父组件。\n\n### 2.2 phase 回调\n\ncomponent 可以实现：\n\n```systemverilog\nfunction void build_phase(uvm_phase phase);\nfunction void connect_phase(uvm_phase phase);\nfunction void end_of_elaboration_phase(uvm_phase phase);\nfunction void start_of_simulation_phase(uvm_phase phase);\ntask run_phase(uvm_phase phase);\nfunction void extract_phase(uvm_phase phase);\nfunction void check_phase(uvm_phase phase);\nfunction void report_phase(uvm_phase phase);\nfunction void final_phase(uvm_phase phase);\n```\n\nUVM 会按顺序自动调用。\n\n### 2.3 组件查找和遍历\n\n常见方法：\n\n- `get_parent()`\n- `get_full_name()`\n- `lookup()`\n- `print_topology()`\n\n## 3. component 的创建\n\n```systemverilog\nclass my_env extends uvm_env;\n  my_agent agent;\n  my_scoreboard scb;\n\n  `uvm_component_utils(my_env)\n\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n  endfunction\n\n  function void build_phase(uvm_phase phase);\n    super.build_phase(phase);\n    agent = my_agent::type_id::create(\"agent\", this);\n    scb   = my_scoreboard::type_id::create(\"scb\", this);\n  endfunction\nendclass\n```\n\n## 4. component 和 object 的关键区别\n\n| 对比项 | uvm_component | uvm_object |\n|--------|---------------|------------|\n| 是否有 parent | 有 | 无 |\n| 是否进入层次树 | 是 | 否 |\n| 是否有 phase | 是 | 否 |\n| 创建参数 | `create(name, parent)` | `create(name)` |\n| 常见对象 | env/agent/driver/monitor | transaction/config/sequence_item |\n\n## 5. component 生命周期\n\n典型顺序：\n\n1. new()\n2. build_phase()\n3. connect_phase()\n4. end_of_elaboration_phase()\n5. start_of_simulation_phase()\n6. run_phase()\n7. extract_phase()\n8. check_phase()\n9. report_phase()\n10. final_phase()\n\n## 6. 常见错误\n\n- 创建时忘了传 parent\n- 在 `build_phase` 之外创建 component\n- 把 component 当 object 用\n- 忘记调用 `super.build_phase(phase)`\n\n## 7. 一句话总结\n\n`uvm_component` 是 UVM 的“骨架节点”，把各个验证单元组织成层次树，并让它们在统一 phase 下协同工作。"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "class my_agent extends uvm_agent;\n  my_driver drv;\n  my_monitor mon;\n  my_sequencer sqr;\n\n  `uvm_component_utils(my_agent)\n\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n  endfunction\n\n  function void build_phase(uvm_phase phase);\n    super.build_phase(phase);\n    sqr = my_sequencer::type_id::create(\"sqr\", this);\n    drv = my_driver  ::type_id::create(\"drv\", this);\n    mon = my_monitor ::type_id::create(\"mon\", this);\n  endfunction\nendclass"
+    }
+  ]
+}

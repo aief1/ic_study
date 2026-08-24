@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "cells": [
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "# uvm_subscriber 详解\n\n## 一句话总结\n\n> **`uvm_subscriber` 是“监听者”，专门接收 analysis port 广播的 transaction，用来做覆盖率、日志或统计。**\n\n---\n\n## 1. subscriber 是什么\n\nsubscriber 本质上是 analysis 接收端的封装：\n\n- monitor 发出 transaction\n- subscriber 接收 transaction\n- subscriber 再做统计、覆盖率、打印\n\n## 2. 为什么需要 subscriber\n\n有些功能不适合写在 scoreboard 里：\n\n- coverage collector\n- transaction logger\n- performance monitor\n- protocol statistics\n\n这些“旁听型组件”就很适合 subscriber。\n\n## 3. 基本结构\n\n```systemverilog\nclass my_subscriber extends uvm_subscriber #(my_item);\n  `uvm_component_utils(my_subscriber)\n\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n  endfunction\n\n  function void write(my_item t);\n    `uvm_info(\"SUB\", $sformatf(\"get item addr=%h data=%h\", t.addr, t.data), UVM_LOW)\n  endfunction\nendclass\n```\n\n## 4. subscriber 和 scoreboard 的区别\n\n| 对比项 | subscriber | scoreboard |\n|--------|------------|------------|\n| 主要用途 | 统计/覆盖率/日志 | 正确性比较 |\n| 是否判断对错 | 不一定 | 是 |\n| 接收方式 | analysis port | analysis export/imp |\n| 典型场景 | coverage collector | expected vs actual |\n\n## 5. subscriber 的典型用法\n\n### 5.1 coverage collector\n\n把 transaction 中的字段采样进 covergroup。\n\n### 5.2 logger\n\n打印所有 transaction，方便调试。\n\n### 5.3 统计器\n\n统计不同命令、地址、长度的出现次数。\n\n## 6. 一句话总结\n\n`uvm_subscriber` 就是“旁听席”，不直接判决对错，但会把 transaction 收集起来做分析。"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "class my_subscriber extends uvm_subscriber #(my_item);\n  `uvm_component_utils(my_subscriber)\n\n  covergroup cg;\n    cp_addr: coverpoint t.addr;\n    cp_data: coverpoint t.data;\n  endgroup\n\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n    cg = new();\n  endfunction\n\n  function void write(my_item t);\n    cg.sample();\n  endfunction\nendclass"
+    }
+  ]
+}

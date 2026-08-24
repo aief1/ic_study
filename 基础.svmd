@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "cells": [
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "## function 与 task\n### function \nfunction不能调用task与always语句\nvoid function 没有返回值\ntask都有"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "function [返回类型] 函数名(input 参数类型 参数名, ...);\n    // 语句\n    return 返回值;\nendfunction\n\nfunction int add(input int a, input int b);\n    return a + b;\nendfunction\n\n// 调用\nint c;\nc = add(3, 4);   // c = 7\n\ntask 任务名(input 参数类型 参数名, output 参数类型 参数名, ...);\n    // 语句\nendtask"
+    },
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "### reference\n不是复制 这个是直接引用"
+    },
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "## 面向对象编程 （class）\n基本特点 封装 继承 多态\n### 封装 （class）\n类 将数据与对数据的操作封装在一起\n数据称为属性\n操作称为方法\nstatic可以用在new里来观察数据流动 \nstatic count"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "class counter();\n    function new();\n        \n    endfunction //new()\nendclass //className\n\n\n\ncounter c1 = new();       // value = 0\ncounter c2 = new(100);    // value = 100\ncounter b1= new();\ncounter b2= new b2;\n//B2 = B1：两个指向同一个空间。\n//B2 = new B1：两个指向不同的空间，但是值一样。但是不能赋值嵌套的对象\nb2.copy(b1)//完美复制"
+    },
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "### 继承（extends）\nextends 用于继承父类的 然后添加自己的\nsuper 用于子调用父类的 比如初始化可以先调用父类的初始化 然后初始化自己的 还可以在子类里重写父类的"
+    },
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "### 多态\n就是对于同一个事件 不同对象不同反应\n实现就是靠的继承 比如父类就是 叫  然后子类 就是各种动物，然后改叫 这一个父类里的实现"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "class Animal {\n  speak() {\n    console.log('动物叫')\n  }\n}\n\nclass Dog extends Animal {\n  speak() {\n    console.log('汪汪')\n  }\n}\n\nclass Cat extends Animal {\n  speak() {\n    console.log('喵喵')\n  }\n}"
+    },
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "### 参数化的类\n就是讲一个父类里塞的都是参数 一般都不是直接用 都是子类调用父类 然后填参数"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "// 一个参数化的加法器\nmodule adder #(\n  parameter WIDTH = 8          // 位宽，默认 8\n) (\n  input  [WIDTH-1:0] a,        // 输入 a\n  input  [WIDTH-1:0] b,        // 输入 b\n  output [WIDTH-1:0] sum       // 输出和\n);\n\n  assign sum = a + b;\n\nendmodule\n\n// 8 位加法器（用默认值）\nadder u1 (.a(a8), .b(b8), .sum(s8));\n\n// 16 位加法器（参数填 16）\nadder #(.WIDTH(16)) u2 (.a(a16), .b(b16), .sum(s16));\n\n// 4 位加法器（参数填 4）\nadder #(4) u3 (.a(a4), .b(b4), .sum(s4));\n"
+    }
+  ]
+}

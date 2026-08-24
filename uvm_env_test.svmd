@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "cells": [
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "# uvm_env 与 uvm_test 详解\n\n## 一句话总结\n\n> **`uvm_env` 是“验证平台总装车间”，`uvm_test` 是“导演”，决定这次仿真用哪个环境、发什么激励、做什么配置。**\n\n---\n\n## 1. env 和 test 的关系\n\n```text\nuvm_test\n  └── env\n        ├── agent\n        ├── scoreboard\n        └── subscriber\n```\n\n- test 负责选择和配置\n- env 负责组织和连接\n\n## 2. uvm_env 的职责\n\nenv 通常做这些事：\n\n- 创建 agent、scoreboard、subscriber\n- 连接 analysis port\n- 接收配置对象\n- 组织验证拓扑\n\n### 2.1 env 示例\n\n```systemverilog\nclass my_env extends uvm_env;\n  `uvm_component_utils(my_env)\n\n  my_agent      agent;\n  my_scoreboard scb;\n\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n  endfunction\n\n  function void build_phase(uvm_phase phase);\n    super.build_phase(phase);\n    agent = my_agent     ::type_id::create(\"agent\", this);\n    scb   = my_scoreboard::type_id::create(\"scb\",   this);\n  endfunction\n\n  function void connect_phase(uvm_phase phase);\n    super.connect_phase(phase);\n    agent.mon.ap.connect(scb.analysis_export);\n  endfunction\nendclass\n```\n\n## 3. uvm_test 的职责\n\ntest 通常做这些事：\n\n- 创建 env\n- 设置 config_db\n- 设置 factory override\n- 启动 sequence\n- 控制 objection\n\n### 3.1 test 示例\n\n```systemverilog\nclass my_test extends uvm_test;\n  `uvm_component_utils(my_test)\n\n  my_env env;\n\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n  endfunction\n\n  function void build_phase(uvm_phase phase);\n    super.build_phase(phase);\n    env = my_env::type_id::create(\"env\", this);\n  endfunction\n\n  task run_phase(uvm_phase phase);\n    my_seq seq;\n    phase.raise_objection(this);\n    seq = my_seq::type_id::create(\"seq\");\n    seq.start(env.agent.sqr);\n    phase.drop_objection(this);\n  endtask\nendclass\n```\n\n## 4. env 和 test 的分工\n\n| 对比项 | env | test |\n|--------|-----|------|\n| 主要作用 | 搭平台 | 定场景 |\n| 是否复用 | 高 | 通常每个测试一个 |\n| 是否启动 sequence | 一般不 | 经常 |\n| 是否设置 override | 可以 | 最常见 |\n| 是否连接 agent/scoreboard | 是 | 一般不直接做细节连接 |\n\n## 5. 常见模式\n\n### 5.1 base test + 派生 test\n\n- base_test：搭公共环境\n- smoke_test / random_test / error_test：只改配置和 sequence\n\n### 5.2 env 可复用，test 多样化\n\n这是 UVM 最典型的复用方式。\n\n## 6. 一句话总结\n\n`uvm_env` 负责“把验证平台搭起来”，`uvm_test` 负责“决定这次怎么跑”。"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "class my_env extends uvm_env;\n  `uvm_component_utils(my_env)\n  my_agent agent;\n\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n  endfunction\n\n  function void build_phase(uvm_phase phase);\n    super.build_phase(phase);\n    agent = my_agent::type_id::create(\"agent\", this);\n  endfunction\nendclass\n\nclass my_test extends uvm_test;\n  `uvm_component_utils(my_test)\n  my_env env;\n\n  function new(string name, uvm_component parent);\n    super.new(name, parent);\n  endfunction\n\n  function void build_phase(uvm_phase phase);\n    super.build_phase(phase);\n    env = my_env::type_id::create(\"env\", this);\n  endfunction\nendclass"
+    }
+  ]
+}

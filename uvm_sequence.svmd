@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "cells": [
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "# uvm_sequence 详解\n\n## 一句话总结\n\n> **`uvm_sequence` 是“发激励的脚本”，负责创建、随机化并发送 sequence_item 给 sequencer。**\n\n---\n\n## 1. sequence 和 sequence_item 的关系\n\n- `sequence_item`：数据包，描述“发什么”\n- `sequence`：发送逻辑，描述“怎么发、发多少、按什么顺序发”\n\n比如：\n\n- 先写 10 次，再读 10 次\n- 先发 short burst，再发 long burst\n- 先发合法包，再发错误包\n\n这些控制逻辑都写在 sequence 里。\n\n## 2. 基本结构\n\n```systemverilog\nclass my_seq extends uvm_sequence #(my_item);\n  `uvm_object_utils(my_seq)\n\n  function new(string name = \"my_seq\");\n    super.new(name);\n  endfunction\n\n  task body();\n    my_item item;\n    repeat (10) begin\n      item = my_item::type_id::create(\"item\");\n      start_item(item);\n      if (!item.randomize())\n        `uvm_error(\"SEQ\", \"randomize failed\")\n      finish_item(item);\n    end\n  endtask\nendclass\n```\n\n## 3. body() 是关键\n\n`body()` 是 sequence 的主任务，真正发激励的代码都写在这里。\n\n## 4. start_item / finish_item\n\n### 4.1 start_item\n\n- 向 sequencer 申请发送\n- 等待许可\n\n### 4.2 finish_item\n\n- 把 item 交给 driver\n- 等 driver 完成\n\n## 5. sequence 怎么启动\n\n### 5.1 在 test 中启动\n\n```systemverilog\nmy_seq seq;\nseq = my_seq::type_id::create(\"seq\");\nseq.start(env.agent.sqr);\n```\n\n### 5.2 在 run_phase 中启动\n\n```systemverilog\ntask run_phase(uvm_phase phase);\n  my_seq seq;\n  phase.raise_objection(this);\n  seq = my_seq::type_id::create(\"seq\");\n  seq.start(env.agent.sqr);\n  phase.drop_objection(this);\nendtask\n```\n\n## 6. 常见 sequence 类型\n\n### 6.1 定向 sequence\n\n固定数据，验证特定场景。\n\n### 6.2 随机 sequence\n\n通过 randomize 产生大量合法组合。\n\n### 6.3 嵌套 sequence\n\n一个 sequence 中启动另一个 sequence。\n\n## 7. 和 sequencer 的分工\n\n- sequence：产生激励\n- sequencer：把激励交给 driver\n- driver：真正把激励驱动到 DUT\n\n## 8. 一句话总结\n\n`uvm_sequence` 就是“激励剧本”，它决定数据包的产生顺序、数量和约束，是 UVM 动态激励的核心。"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "class my_item extends uvm_sequence_item;\n  rand bit [31:0] addr;\n  rand bit [31:0] data;\n  `uvm_object_utils(my_item)\n  function new(string name=\"my_item\"); super.new(name); endfunction\nendclass\n\nclass my_seq extends uvm_sequence #(my_item);\n  `uvm_object_utils(my_seq)\n  function new(string name=\"my_seq\"); super.new(name); endfunction\n\n  task body();\n    my_item item;\n    repeat (5) begin\n      item = my_item::type_id::create(\"item\");\n      start_item(item);\n      item.randomize();\n      finish_item(item);\n    end\n  endtask\nendclass"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "signal": [
+    { "name": "HCLK",         "wave": "p......" },
+    {},
+    { "name": "HADDR",        "wave": "x.=x...", "data": ["0x2000"] },
+    { "name": "HWRITE",       "wave": "0.0...." },
+    { "name": "HTRANS",       "wave": "0.2.0..", "data": ["NONSEQ"] },
+    { "name": "HBURST",       "wave": "0.2.0..", "data": ["SINGLE"] },
+    { "name": "HSIZE",        "wave": "0.2.0..", "data": ["WORD"] },
+    {},
+    { "name": "HREADY_OUT",   "wave": "0.1...." },
+    { "name": "HRESP",        "wave": "0.2.0..", "data": ["ERROR"] },
+    { "name": "HRDATA",       "wave": "x......" },
+    {},
+    { "name": "SRAM_CEN",     "wave": "0.1.0.." },
+    { "name": "SRAM_WEN",     "wave": "0.0...." }
+  ],
+  "head": { "text": "CBB_AHB_SRAMC - Address out-of-range ERROR Response", "tick": 0 },
+  "foot": { "text": "HADDR=0x2000 outside SRAM range [0x0000, 0x0FFF]; HRESP=ERROR, SRAM_CEN=1 (disabled)", "tock": 0 },
+  "config": { "hscale": 2 }
+}

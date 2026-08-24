@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "cells": [
+    {
+      "kind": 1,
+      "language": "markdown",
+      "value": "# UVM Objection 机制详解\n\n## 一句话总结\n\n> **objection 就是“别急着结束仿真”的计数器，所有 objection 都 drop 后，run_phase 才结束。**\n\n---\n\n## 1. 为什么需要 objection\n\nUVM 默认会想尽快结束仿真，但很多 test 其实还在发激励、等响应。如果没有 objection，仿真可能提前终止。\n\nobjection 的作用：\n\n- 告诉 UVM“我还没干完”\n- 阻止 run_phase 过早结束\n\n## 2. 基本用法\n\n```systemverilog\ntask run_phase(uvm_phase phase);\n  phase.raise_objection(this);\n  // do something\n  phase.drop_objection(this);\nendtask\n```\n\n## 3. 工作机制\n\n- `raise_objection()`：计数 +1\n- `drop_objection()`：计数 -1\n- 当所有 objection 都为 0，run_phase 结束\n\n## 4. 常见场景\n\n### 4.1 test 中启动 sequence\n\n```systemverilog\ntask run_phase(uvm_phase phase);\n  phase.raise_objection(this);\n  seq.start(env.agent.sqr);\n  phase.drop_objection(this);\nendtask\n```\n\n### 4.2 等待多个并行任务\n\n```systemverilog\ntask run_phase(uvm_phase phase);\n  phase.raise_objection(this);\n  fork\n    task1();\n    task2();\n  join\n  phase.drop_objection(this);\nendtask\n```\n\n## 5. 常见坑\n\n- raise 了但忘了 drop，仿真永远不结束\n- 只在 driver raise，但 test 早退出\n- objection 加在错误组件上，导致层次混乱\n\n## 6. 一句话总结\n\nobjection 就是 UVM 的“仿真刹车”，确保该跑的任务跑完之前，仿真不会提前收工。"
+    },
+    {
+      "kind": 2,
+      "language": "systemverilog",
+      "value": "class my_test extends uvm_test;\n  task run_phase(uvm_phase phase);\n    phase.raise_objection(this);\n    #100ns;\n    phase.drop_objection(this);\n  endtask\nendclass"
+    }
+  ]
+}
